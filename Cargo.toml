@@ -1,0 +1,9 @@
+[package]
+name = "formula_destruction_cli_tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dotenv = "0.15.0"
+sqlx = { version = "0.8.0", features = ["mysql", "runtime-tokio"] }
+tokio = { version = "1.39.3", features = ["full"] }

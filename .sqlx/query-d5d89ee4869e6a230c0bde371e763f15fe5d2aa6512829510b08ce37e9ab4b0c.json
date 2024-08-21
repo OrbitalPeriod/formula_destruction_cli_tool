@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO result (position, bot_result, pole, leading_lap, fastest_lap, qualy_result, season, race_id)\n            VALUES (?,?,?,?,?,?,?,?);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "d5d89ee4869e6a230c0bde371e763f15fe5d2aa6512829510b08ce37e9ab4b0c"
+}
