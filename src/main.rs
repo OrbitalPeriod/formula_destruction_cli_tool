@@ -1,51 +1,50 @@
+use std::{fs, path::Path};
+
+use formula_destruction_cli_tool::{Config, ConfigMode};
+mod fileparser;
+
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().expect("Failed to read .env file");
+    let args = std::env::args();
+    let config = parse_config(args);
 
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = sqlx::MySqlPool::connect(&db_url).await.expect("Failed to connect to sql");
-    add_result(pool).await;
-    
 }
 
-async fn add_result(pool: sqlx::MySqlPool) {
-    let race_id = 18;
-    let position = 111;
-    let bot_result = false;
-    let pole = false;
-    let leading_lap = false;
-    let fastest_lap = false;
-    let qualy_result: Option<i32> = Some(20);
-    let seat_id = 9;
-    let season = 3;
+fn parse_config(args : std::env::Args) -> Config{
+    dotenv::dotenv().expect("Failed to read .env file");
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let mut tx = pool.begin().await.expect("Failed to start transaction");
+    let mut iter = args.skip(1);
+    let mode = iter.next();
+    let config_mode = match mode{
+        Some(value) => {
+            match value.to_lowercase().as_str(){
+                "r" => ConfigMode::RaceResult,
+                _ => panic!("Invalid race result input")
+            }
+        },
+        None => {
+            panic!("No value given");
+        }
+    };
 
-    sqlx::query!(
-        "INSERT INTO result (position, bot_result, pole, leading_lap, fastest_lap, qualy_result, season, race_id)
-            VALUES (?,?,?,?,?,?,?,?)",
-        position, bot_result, pole, leading_lap, fastest_lap, qualy_result, season, race_id
-    )
-    .execute(&mut *tx)
-    .await
-    .expect("Failed to insert result");
+    let file_path = iter.next();
+    let file_path = match file_path{
+        Some(path) => {
+            let path_obj = Path::new(&path).clone();
+            if path_obj.exists(){
+                path
+            }else{
+                panic!("File does not exist")
+            }
+        },
+        None => panic!("No path given")
+    };
 
-    // Execute a separate query to get the last inserted ID
-    let result = sqlx::query!(
-        "SELECT LAST_INSERT_ID() AS result_id"
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .expect("Failed to fetch last insert ID");
-
-    let result_id: u64 = result.result_id;
-
-    sqlx::query!(
-        "INSERT INTO has_result (result_id, seat_id)
-            VALUES (?,?)",
-        result_id, seat_id
-    ).execute(&mut *tx).await.expect("Failed to insert has_result");
-
-    tx.commit().await.expect("Failed to commit transaction");
+    Config{
+        database_url: db_url,
+        mode : config_mode,
+        filepath: file_path,
+    }
 }
