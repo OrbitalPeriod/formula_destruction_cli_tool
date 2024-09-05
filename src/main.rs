@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use formula_destruction_cli_tool::{Config, ConfigMode};
+use formula_destruction_cli_tool::{Config, ConfigMode, run};
 mod fileparser;
 
 
@@ -8,8 +8,13 @@ mod fileparser;
 async fn main() {
     let args = std::env::args();
     let config = parse_config(args);
-
+    
+    match run(&config).await{
+        Ok(_) => println!("Program executed succefully"),
+        Err(e) => eprintln!("Something went wrong: {}", e)
+    }
 }
+
 
 fn parse_config(args : std::env::Args) -> Config{
     dotenv::dotenv().expect("Failed to read .env file");
@@ -32,7 +37,7 @@ fn parse_config(args : std::env::Args) -> Config{
     let file_path = iter.next();
     let file_path = match file_path{
         Some(path) => {
-            let path_obj = Path::new(&path).clone();
+            let path_obj = Path::new(&path);
             if path_obj.exists(){
                 path
             }else{
